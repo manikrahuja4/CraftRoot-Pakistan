@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Outfit", sans-serif;
+  
+  --color-brand-cream: #FDF9F3;
+  --color-brand-earth: #EAE2D6;
+  --color-brand-maroon: #541717;
+  --color-brand-indigo: #0F203A;
+  --color-brand-brown: #3C2F2F;
+  --color-brand-sand: #F7EFE2;
+  --color-brand-paper: #FFFDFB;
+
+  --radius-4xl: 2rem;
+  --radius-5xl: 3rem;
+}
+
+body {
+  @apply bg-brand-cream text-brand-brown font-sans selection:bg-brand-maroon selection:text-white antialiased;
+}
+
+.serif {
+  @apply font-serif transition-colors;
+}
+
+/* Subtle Cultural Patterns */
+.ajrak-pattern-subtle {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5.878 18.09h19.022l-15.39 11.18 5.878 18.09-15.39-11.18-15.39 11.18 5.878-18.09-15.39-11.18h19.022z' fill='%23541717' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.textile-texture-light {
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='0.015' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Modern Rounded Buttons */
+.btn-modern-primary {
+  @apply relative px-8 py-4 rounded-full text-xs font-bold uppercase tracking-[0.2em] transition-all duration-500 overflow-hidden inline-flex items-center justify-center bg-brand-maroon text-white hover:bg-brand-indigo hover:shadow-2xl hover:scale-[1.02] active:scale-95 cursor-pointer;
+}
+
+.btn-modern-outline {
+  @apply relative px-8 py-4 rounded-full text-xs font-bold uppercase tracking-[0.2em] transition-all duration-500 overflow-hidden inline-flex items-center justify-center border border-brand-maroon/20 text-brand-maroon hover:border-brand-maroon hover:bg-brand-maroon/5 cursor-pointer;
+}
+
+/* Glass effect */
+.glass-panel {
+  @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-2xl;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth page transitions */
+.page-transition {
+  @apply motion-safe:transition-all motion-safe:duration-700;
+}
+
+
+
+
+

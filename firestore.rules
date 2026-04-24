@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    // Admin check: Hardcoded email and checks for admin role in users collection
+    function isAdmin() { 
+      return isSignedIn() && (
+        request.auth.token.email == 'fatimakhanzada.paak@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // --- User Rules ---
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.email is string && data.email.size() <= 100 &&
+               data.role in ['user', 'admin'] &&
+               (data.name == null || (data.name is string && data.name.size() <= 100)) &&
+               (data.uid == null || data.uid == userId);
+      }
+
+      allow get: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(incoming()) && (
+        incoming().role == 'user' || (incoming().role == 'admin' && request.auth.token.email == 'fatimakhanzada.paak@gmail.com')
+      );
+      allow update: if (isOwner(userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'addresses'])
+      )) || isAdmin();
+    }
+
+    // --- Order Rules ---
+    match /orders/{orderId} {
+      function isValidOrder(data) {
+        return data.userId == request.auth.uid &&
+               data.items is list && data.items.size() > 0 &&
+               data.total is number && data.total >= 0 &&
+               data.status in ['pending', 'shipped', 'delivered', 'cancelled'];
+      }
+
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidOrder(incoming());
+      allow update: if isAdmin() || (isOwner(existing().userId) && incoming().status == 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status']));
+    }
+
+    // --- Review Rules ---
+    match /reviews/{reviewId} {
+      function isValidReview(data) {
+        return data.userId == request.auth.uid &&
+               data.productId is string &&
+               data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+               data.comment is string && data.comment.size() <= 1000 &&
+               data.createdAt != null;
+      }
+
+      allow read: if true;
+      allow create: if isSignedIn() && isValidReview(incoming());
+      allow update: if isOwner(existing().userId) && 
+                    incoming().diff(existing()).affectedKeys().hasAny(['comment', 'rating', 'helpful']) || isAdmin();
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(existing().userId));
+    }
+
+    // --- Inventory Rules ---
+    match /inventory/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Connection Test Rules ---
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // --- Analytics Rules ---
+    match /analytics/{eventId} {
+      function isValidAnalytics(data) {
+        return data.eventName is string && data.eventName.size() <= 100 &&
+               data.timestamp != null;
+      }
+      allow create: if true; 
+      allow read: if isAdmin();
+    }
+  }
+}
